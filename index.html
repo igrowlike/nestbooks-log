@@ -16,7 +16,7 @@
     --border: #262626;
     --text: #ffffff;
     --muted: #8c8c8c;
-    --accent: #FC4C02;
+    --accent: #4FC3F7;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: var(--bg); }
@@ -370,9 +370,9 @@
         <div class="field">
           <label>Color</label>
           <div class="color-picker" id="colorPicker">
-            <button type="button" class="color-swatch active" data-color="#FC4C02" style="background:#FC4C02" aria-label="Strava Orange"></button>
+            <button type="button" class="color-swatch active" data-color="#4FC3F7" style="background:#4FC3F7" aria-label="Sky Blue"></button>
             <button type="button" class="color-swatch" data-color="#39FF14" style="background:#39FF14" aria-label="Neon Green"></button>
-            <button type="button" class="color-swatch" data-color="#2979FF" style="background:#2979FF" aria-label="Blue"></button>
+            <button type="button" class="color-swatch" data-color="#FC4C02" style="background:#FC4C02" aria-label="Strava Orange"></button>
           </div>
         </div>
         <div class="field" style="margin-bottom: 0;">
@@ -431,7 +431,7 @@
     DIM: '#8c8c8c',
     DIMMER: '#3c3c3c',
     VERY_DIM: '#262626',
-    ACCENT: '#FC4C02',
+    ACCENT: '#4FC3F7',
   };
 
   const canvas = document.getElementById('canvas');
@@ -764,12 +764,12 @@
     });
     render();
   }
-  const savedColor = localStorage.getItem('gbl_accent') || '#FC4C02';
+  const savedColor = localStorage.getItem('nbl_accent') || '#4FC3F7';
   applyAccent(savedColor);
   document.querySelectorAll('.color-swatch').forEach((btn) => {
     btn.addEventListener('click', () => {
       const c = btn.dataset.color;
-      localStorage.setItem('gbl_accent', c);
+      localStorage.setItem('nbl_accent', c);
       applyAccent(c);
     });
   });
