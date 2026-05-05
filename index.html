@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nestbooks Log — 책장 너머의 기록</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+/>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --card: #141414;
+    --border: #262626;
+    --text: #ffffff;
+    --muted: #8c8c8c;
+    --accent: #FC4C02;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); }
+  body {
+    font-family: Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 880px; margin: 0 auto; }
+  header {
+    text-align: left;
+    margin-bottom: 28px;
+    max-width: 808px;  /* match layout width: 420 + 28 + 360 */
+    margin-left: auto;
+    margin-right: auto;
+  }
+  header p { font-weight: 600; }
+  header h1 {
+    font-weight: 900;
+    font-size: clamp(28px, 7.5vw, 42px);
+    letter-spacing: 0.01em;
+    color: var(--accent);
+    line-height: 1;
+  }
+  header h1 .version {
+    font-size: clamp(12px, 2.8vw, 16px);
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0;
+    margin-left: 6px;
+    vertical-align: baseline;
+  }
+  @media (max-width: 820px) {
+    header { max-width: 420px; }
+  }
+  header p {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.3;
+  }
+  header .credit {
+    margin-top: 0;
+    font-size: 12px;
+    opacity: 0.6;
+    letter-spacing: 0.02em;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 420px 360px;
+    gap: 28px;
+    align-items: start;
+    justify-content: center;
+  }
+  @media (max-width: 820px) {
+    .layout { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
+  }
+  .form-card {
+    background: transparent;
+    padding: 0;
+  }
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .en {
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 0.78em;
+    margin-left: 4px;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .color-picker {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .color-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 0;
+    padding: 0;
+    box-shadow: 0 0 0 2px transparent;
+    transition: box-shadow 0.15s, transform 0.05s;
+  }
+  .color-swatch:hover { transform: scale(1.06); }
+  .color-swatch.active {
+    box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px #ffffff;
+  }
+  .seg label {
+    border-radius: 999px;
+    padding: 10px 0;
+  }
+  .seg input:checked + span,
+  .seg label:has(input:checked) {
+    border-radius: 999px;
+  }
+  .field { margin-bottom: 12px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--text);
+    margin-bottom: 5px;
+    font-weight: 700;
+  }
+  .field input[type="text"],
+  .field input[type="number"],
+  .field input[type="date"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    transition: border-color 0.15s;
+  }
+  .field input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .title-row {
+    display: flex;
+    gap: 8px;
+  }
+  .title-row input { flex: 1; }
+  .autofill-btn {
+    align-self: stretch;
+    padding: 0 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s, opacity 0.15s;
+  }
+  .autofill-btn:hover { border-color: var(--accent); }
+  .autofill-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .autofill-status {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .autofill-status:not(:empty) { margin-top: 6px; }
+  .autofill-status.success { color: var(--accent); }
+  .autofill-status.error { color: #f59e0b; }
+  .result-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .result-chips:not(:empty) { margin-top: 8px; }
+  .result-chip {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+  }
+  .result-chip:hover { border-color: var(--accent); }
+  .result-chip.active {
+    border-color: var(--accent);
+    background: rgba(57, 255, 20, 0.10);
+    color: var(--accent);
+  }
+  .date-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .date-row input { flex: 1; }
+  .date-stepper {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .date-stepper button {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    cursor: pointer;
+    width: 36px;
+    flex: 1;
+    font-size: 12px;
+    padding: 0;
+    line-height: 1;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .date-stepper button:hover {
+    border-color: var(--accent);
+    background: var(--bg);
+  }
+  .date-stepper button:active { transform: scale(0.95); }
+  .seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    gap: 4px;
+  }
+  .seg.three { grid-template-columns: 1fr 1fr 1fr; }
+  .seg label {
+    margin: 0;
+    text-align: center;
+    padding: 7px 0;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .seg input { display: none; }
+  .seg input:checked + span {
+    background: var(--accent);
+    color: white;
+    display: block;
+    border-radius: 6px;
+    padding: 8px 0;
+    margin: -8px 0;
+  }
+  .seg label:has(input:checked) {
+    background: var(--accent);
+    color: white;
+  }
+  .preview {
+    text-align: center;
+    position: sticky;
+    top: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  canvas {
+    width: 100%;
+    max-width: 360px;
+    height: auto;
+    border-radius: 14px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55);
+    display: block;
+  }
+  .preview.transparent canvas {
+    background-image:
+      linear-gradient(45deg, #1a1a1a 25%, transparent 25%),
+      linear-gradient(-45deg, #1a1a1a 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #1a1a1a 75%),
+      linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
+    background-size: 24px 24px;
+    background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+  }
+  .download {
+    margin-top: 14px;
+    background: var(--accent);
+    color: #0a0a0a;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 999px;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    width: 100%;
+    max-width: 360px;
+    transition: filter 0.15s, transform 0.05s;
+  }
+  .download:hover { filter: brightness(1.1); }
+  .download:active { transform: scale(0.99); }
+  footer {
+    margin-top: 64px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>NESTBOOKS LOG <span class="version">v.2.0</span></h1>
+    <p>책장 너머의 기록</p>
+    <p class="credit">by @nestbooks_</p>
+  </header>
+
+  <div class="layout">
+    <form class="form-card" id="form" autocomplete="off">
+      <div class="section">
+        <div class="section-title">Style</div>
+        <div class="field">
+          <label>Layout</label>
+          <div class="seg">
+            <label>
+              <input type="radio" name="stat" value="pace" checked />
+              Pace
+            </label>
+            <label>
+              <input type="radio" name="stat" value="progress" />
+              Progress
+            </label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Style</label>
+          <div class="seg three">
+            <label>
+              <input type="radio" name="style" value="sketch" checked />
+              Sketch
+            </label>
+            <label>
+              <input type="radio" name="style" value="book" />
+              Book
+            </label>
+            <label>
+              <input type="radio" name="style" value="stats" />
+              Stats
+            </label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Color</label>
+          <div class="color-picker" id="colorPicker">
+            <button type="button" class="color-swatch active" data-color="#FC4C02" style="background:#FC4C02" aria-label="Strava Orange"></button>
+            <button type="button" class="color-swatch" data-color="#39FF14" style="background:#39FF14" aria-label="Neon Green"></button>
+            <button type="button" class="color-swatch" data-color="#2979FF" style="background:#2979FF" aria-label="Blue"></button>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom: 0;">
+          <label>Background</label>
+          <div class="seg">
+            <label>
+              <input type="radio" name="bg" value="transparent" checked />
+              Clear
+            </label>
+            <label>
+              <input type="radio" name="bg" value="dark" />
+              Dark
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Today</div>
+        <div class="field">
+          <label for="total">Total Pages</label>
+          <input type="number" id="total" min="1" required />
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="todayStart">From Page</label>
+            <input type="number" id="todayStart" min="1" required />
+          </div>
+          <div class="field">
+            <label for="todayEnd">To Page</label>
+            <input type="number" id="todayEnd" min="1" required />
+          </div>
+        </div>
+        <div class="field" style="margin-bottom: 0;">
+          <label for="time">Time (min)</label>
+          <input type="number" id="time" min="0" required />
+        </div>
+      </div>
+    </form>
+
+    <div class="preview">
+      <canvas id="canvas" aria-label="book log card preview"></canvas>
+      <button type="button" class="download" id="download">Download PNG</button>
+    </div>
+  </div>
+
+  <footer>client-side rendering · no data leaves your browser</footer>
+</div>
+
+<script>
+  const CANVAS = { W: 786, H: 1398 };
+
+  const COLOR = {
+    BG: '#101010',
+    FG: '#ffffff',
+    DIM: '#8c8c8c',
+    DIMMER: '#3c3c3c',
+    VERY_DIM: '#262626',
+    ACCENT: '#FC4C02',
+  };
+
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  function getStat() {
+    const el = document.querySelector('input[name="stat"]:checked');
+    return el ? el.value : 'pace';
+  }
+
+  function getStyle() {
+    const el = document.querySelector('input[name="style"]:checked');
+    return el ? el.value : 'sketch';
+  }
+
+  function getBgMode() {
+    const el = document.querySelector('input[name="bg"]:checked');
+    return el ? el.value : 'transparent';
+  }
+
+  function fillBackground(W, H) {
+    if (getBgMode() === 'dark') {
+      ctx.fillStyle = COLOR.BG;
+      ctx.fillRect(0, 0, W, H);
+    } else {
+      ctx.clearRect(0, 0, W, H);
+    }
+  }
+
+  function drawText(text, x, y) {
+    ctx.fillText(text, x, y);
+  }
+
+  function spiralGhostColor() {
+    // Color for the "unread" part of the spiral
+    if (getBgMode() === 'transparent') {
+      return 'rgba(255,255,255,0.18)';
+    }
+    return COLOR.VERY_DIM;
+  }
+
+  const sketchImg = new Image();
+  sketchImg.src = 'book-sketch.png';
+  sketchImg.onload = () => render();
+
+  function drawSketchBook(cx, cy, color, fraction = 1) {
+    if (!sketchImg.complete || !sketchImg.naturalWidth) return;
+    const targetW = 480;
+    const targetH = (sketchImg.naturalHeight / sketchImg.naturalWidth) * targetW;
+    const off = document.createElement('canvas');
+    off.width = Math.round(targetW);
+    off.height = Math.round(targetH);
+    const octx = off.getContext('2d');
+
+    // 1. Draw the sketch (line art with original alpha preserved)
+    octx.drawImage(sketchImg, 0, 0, targetW, targetH);
+
+    // 2. source-in with FULL accent color (preserves original alpha, no fade)
+    octx.globalCompositeOperation = 'source-in';
+    octx.fillStyle = color;
+    octx.fillRect(0, 0, targetW, targetH);
+
+    // 3. For Progress mode (fraction < 1), fade RIGHT (unread) portion
+    //    by overlaying semi-transparent white → looks like lighter accent
+    if (fraction < 1) {
+      octx.globalCompositeOperation = 'source-atop';
+      octx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+      const fillW = targetW * Math.max(0, Math.min(1, fraction));
+      octx.fillRect(fillW, 0, targetW - fillW, targetH);
+    }
+
+    ctx.drawImage(off, cx - targetW / 2, cy - targetH / 2);
+  }
+
+  function drawBookIcon(cx, cy, color, lineWidth = 6, fraction = 0) {
+    const bw = 360, bh = 240;
+    const xL = cx - bw / 2, xR = cx + bw / 2;
+    const yT = cy - bh / 2, yB = cy + bh / 2;
+    const spineTopY = yT + bh * 0.30;
+    const spineBotY = yB - 4;
+
+    const points = [
+      [cx, spineBotY],
+      [xL + 18, yB - 14],
+      [xL + 6, yT + 6],
+      [cx, spineTopY],
+      [xR - 6, yT + 6],
+      [xR - 18, yB - 14],
+    ];
+
+    function buildPolygon() {
+      ctx.beginPath();
+      ctx.moveTo(points[0][0], points[0][1]);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i][0], points[i][1]);
+      }
+      ctx.closePath();
+    }
+    function buildSpine() {
+      ctx.beginPath();
+      ctx.moveTo(cx, spineTopY);
+      ctx.lineTo(cx, spineBotY);
+    }
+
+    ctx.save();
+    ctx.lineWidth = lineWidth;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    // Pass 1: full outline + spine in ghost color
+    ctx.strokeStyle = spiralGhostColor();
+    buildPolygon();
+    ctx.stroke();
+    buildSpine();
+    ctx.stroke();
+
+    // Pass 2: LEFT portion (fraction) in accent color, clipped
+    if (fraction > 0) {
+      ctx.save();
+      const clipRightX = xL + bw * Math.min(1, fraction);
+      ctx.beginPath();
+      ctx.rect(xL - 30, yT - 30, (clipRightX - xL) + 30, bh + 60);
+      ctx.clip();
+
+      ctx.strokeStyle = color;
+      buildPolygon();
+      ctx.stroke();
+      buildSpine();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    ctx.restore();
+  }
+
+  function setupCanvas() {
+    const { W, H } = CANVAS;
+    // Target export = 1080 x 1920 (Strava/iPhone share size)
+    const TARGET_W = 1080;
+    const scale = TARGET_W / W;  // ~1.374
+    canvas.width = Math.round(W * scale);   // 1080
+    canvas.height = Math.round(H * scale);  // 1920
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(scale, scale);
+    return { W, H };
+  }
+
+  function setFont(weight, size) {
+    ctx.font = `${weight} ${size}px Pretendard, -apple-system, sans-serif`;
+  }
+
+  function squareSpiralPoint(t, cx, cy, rMin, rMax, turns) {
+    const theta = t * turns * 2 * Math.PI - Math.PI / 2;
+    const r = rMin + (rMax - rMin) * t;
+    const cosv = Math.cos(theta), sinv = Math.sin(theta);
+    const m = Math.max(Math.abs(cosv), Math.abs(sinv));
+    if (m === 0) return [cx, cy];
+    return [cx + (r * cosv) / m, cy + (r * sinv) / m];
+  }
+
+  function drawSpiralSegment(cx, cy, rMin, rMax, turns, fStart, fEnd, color, lineWidth, n) {
+    if (fEnd <= fStart) return;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'butt';
+    ctx.lineJoin = 'miter';
+    ctx.beginPath();
+    const nStart = Math.floor(n * fStart);
+    const nEnd = Math.floor(n * fEnd);
+    const [px, py] = squareSpiralPoint(fStart, cx, cy, rMin, rMax, turns);
+    ctx.moveTo(px, py);
+    for (let i = nStart + 1; i <= nEnd; i++) {
+      const [x, y] = squareSpiralPoint(i / n, cx, cy, rMin, rMax, turns);
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  function drawSquareSpiral({ cx, cy, rMax, rMin, fraction, color, todayWidth = 8 }) {
+    const turns = 4;
+    const n = 3000;
+    const ghostColor = spiralGhostColor();
+
+    drawSpiralSegment(cx, cy, rMin, rMax, turns, 0, 1, ghostColor, 2, n);
+
+    if (fraction <= 0) return;
+
+    const f2 = Math.max(0, Math.min(1, fraction));
+    drawSpiralSegment(cx, cy, rMin, rMax, turns, 0, f2, color, todayWidth, n);
+
+    const [ex, ey] = squareSpiralPoint(f2, cx, cy, rMin, rMax, turns);
+    const dotR = todayWidth + 4;
+    const ringR = dotR + 10;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(ex, ey, dotR, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(ex, ey, ringR, 0, 2 * Math.PI);
+    ctx.stroke();
+  }
+
+  function readForm() {
+    const total = Math.max(0, parseInt(document.getElementById('total').value, 10) || 0);
+    const todayStart = Math.max(0, parseInt(document.getElementById('todayStart').value, 10) || 0);
+    let todayEnd = parseInt(document.getElementById('todayEnd').value, 10) || 0;
+    if (todayEnd > 0 && todayStart > 0) {
+      todayEnd = Math.max(todayStart, todayEnd);
+      if (total > 0) todayEnd = Math.min(total, todayEnd);
+    }
+    const time = Math.max(0, parseInt(document.getElementById('time').value, 10) || 0);
+    return { total, todayStart, todayEnd, time };
+  }
+
+  function parseValue(value) {
+    const m = String(value).match(/^([\d.,]+)(.*)$/);
+    if (m) return { num: m[1], unit: m[2] };
+    return { num: value, unit: '' };
+  }
+
+  function drawDualSizeValue(centerX, midY, num, unit, numSize, unitSize) {
+    if (!unit) {
+      setFont(900, numSize);
+      ctx.textAlign = 'center';
+      ctx.fillText(num, centerX, midY);
+      return;
+    }
+    setFont(900, numSize);
+    const numW = ctx.measureText(num).width;
+    setFont(900, unitSize);
+    const unitW = ctx.measureText(unit).width;
+    const gap = 4;
+    const totalW = numW + gap + unitW;
+    const startX = centerX - totalW / 2;
+    // Bottom-align: shift unit down so its visual bottom matches number's bottom
+    const unitMidY = midY + (numSize - unitSize) / 2;
+
+    ctx.textAlign = 'left';
+    setFont(900, numSize);
+    ctx.fillText(num, startX, midY);
+    setFont(900, unitSize);
+    ctx.fillText(unit, startX + numW + gap, unitMidY);
+    ctx.textAlign = 'center';
+  }
+
+  function calcThirdStat(data) {
+    const pages = Math.max(0, data.todayEnd - data.todayStart);
+    if (getStat() === 'pace') {
+      if (data.time === 0 || pages === 0) return ['Pace', '0.0p/m'];
+      const pace = (pages / data.time).toFixed(1);
+      return ['Pace', `${pace}p/m`];
+    }
+    if (data.total === 0 || data.todayEnd === 0) return ['Progress', '0%'];
+    const progress = Math.round((data.todayEnd / data.total) * 100);
+    return ['Progress', `${progress}%`];
+  }
+
+  function renderCard(W, H, data) {
+    const { todayStart, todayEnd, time } = data;
+    const pages = Math.max(0, todayEnd - todayStart);
+
+    fillBackground(W, H);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const stats = [
+      ['Pages', String(pages)],
+      ['Time', `${time}m`],
+      calcThirdStat(data),
+    ];
+
+    // Always reset to white before stats (so they show even when title/author empty)
+    ctx.fillStyle = COLOR.FG;
+
+    const baseY = 200;
+    const rowGap = 192;
+    const NUM_SIZE = 104;
+    const UNIT_SIZE = 73; // 70% of NUM_SIZE
+    stats.forEach(([label, value], i) => {
+      const rowY = baseY + i * rowGap;
+      setFont(700, 30);
+      ctx.fillText(label, W / 2, rowY);
+      const { num, unit } = parseValue(value);
+      drawDualSizeValue(W / 2, rowY + 96, num, unit, NUM_SIZE, UNIT_SIZE);
+    });
+
+    // Fill fraction: Pace mode → always 100%, Progress mode → todayEnd/total
+    const fraction = (getStat() === 'pace')
+      ? 1
+      : (data.total > 0 ? Math.min(1, todayEnd / data.total) : 0);
+
+    const style = getStyle();
+    if (style === 'book') {
+      drawBookIcon(W / 2, 1050, COLOR.ACCENT, 6, fraction);
+    } else if (style === 'sketch') {
+      drawSketchBook(W / 2, 1050, COLOR.ACCENT, fraction);
+    } else {
+      drawSquareSpiral({
+        cx: W / 2, cy: 1050,
+        rMax: 160, rMin: 16,
+        fraction,
+        color: COLOR.ACCENT,
+        todayWidth: 7,
+      });
+    }
+  }
+
+  function render() {
+    const { W, H } = setupCanvas();
+    const data = readForm();
+    document.querySelector('.preview').classList.toggle(
+      'transparent', getBgMode() !== 'dark'
+    );
+    renderCard(W, H, data);
+  }
+
+  function slugify(s) {
+    return s.replace(/[\s\\/:*?"<>|]+/g, '_').slice(0, 40);
+  }
+
+  // Color picker — persist via localStorage
+  function applyAccent(hex) {
+    COLOR.ACCENT = hex;
+    document.documentElement.style.setProperty('--accent', hex);
+    document.querySelectorAll('.color-swatch').forEach((b) => {
+      b.classList.toggle('active', b.dataset.color.toUpperCase() === hex.toUpperCase());
+    });
+    render();
+  }
+  const savedColor = localStorage.getItem('gbl_accent') || '#FC4C02';
+  applyAccent(savedColor);
+  document.querySelectorAll('.color-swatch').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const c = btn.dataset.color;
+      localStorage.setItem('gbl_accent', c);
+      applyAccent(c);
+    });
+  });
+
+  document.getElementById('form').addEventListener('input', render);
+  document.getElementById('form').addEventListener('change', render);
+  document.getElementById('download').addEventListener('click', () => {
+    const stat = getStat();
+    const style = getStyle();
+    const today = new Date().toISOString().slice(0, 10);
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `growbooklog_${today}_${stat}_${style}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  });
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(render);
+  } else {
+    setTimeout(render, 100);
+  }
+</script>
+</body>
+</html>
